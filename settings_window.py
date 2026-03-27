@@ -8,6 +8,8 @@ from config_manager import LANGUAGE_OPTIONS, MODEL_OPTIONS
 import startup_manager
 from transcription_backends import DEFAULT_BACKEND, get_backend_options
 
+FASTER_WHISPER_DEVICE_OPTIONS = ["Auto", "CPU", "CUDA"]
+
 THEMES = {
     "light": {
         "window_bg": "#f3f6fb",
@@ -80,6 +82,9 @@ class SettingsWindow(ctk.CTkToplevel):
         lang_display = next((key for key, value in LANGUAGE_OPTIONS.items() if value == lang_code), "English")
         self._lang_var = ctk.StringVar(value=lang_display)
         self._beam_var = ctk.IntVar(value=self._settings.get("beam_size", 15))
+        self._faster_whisper_device_var = ctk.StringVar(
+            value=self._settings.get("faster_whisper_device", "auto").capitalize()
+        )
         self._theme_var = ctk.StringVar(value=self._theme_name.capitalize())
         hotkey = self._settings.get("hotkey", ["ctrl", "shift"])
         self._hotkey_var = ctk.StringVar(value=" + ".join(key.capitalize() for key in hotkey))
@@ -95,6 +100,10 @@ class SettingsWindow(ctk.CTkToplevel):
             description="Choose the runtime backend and how aggressively Dictly searches for transcripts.",
             fields=[
                 ("Backend", lambda master: self._build_option_menu(master, self._backend_var, backend_labels)),
+                (
+                    "Faster-Whisper Device",
+                    lambda master: self._build_option_menu(master, self._faster_whisper_device_var, FASTER_WHISPER_DEVICE_OPTIONS),
+                ),
                 ("Model", lambda master: self._build_option_menu(master, self._model_var, MODEL_OPTIONS)),
                 ("Language", lambda master: self._build_option_menu(master, self._lang_var, list(LANGUAGE_OPTIONS.keys()))),
                 ("Beam Size", self._build_beam_widget),
@@ -263,6 +272,7 @@ class SettingsWindow(ctk.CTkToplevel):
         self._settings["model"] = self._model_var.get()
         self._settings["language"] = LANGUAGE_OPTIONS.get(self._lang_var.get())
         self._settings["beam_size"] = self._beam_var.get()
+        self._settings["faster_whisper_device"] = self._faster_whisper_device_var.get().lower()
         self._settings["theme"] = self._theme_var.get().lower()
         self._settings["append_space"] = self._append_var.get()
         self._settings["prepend_space"] = self._prepend_var.get()

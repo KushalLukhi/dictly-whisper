@@ -3,6 +3,7 @@ __pycache__/
 *.py[cod]
 *.egg-info/
 dist/
+installer-dist/
 build/
 *.spec.bak
 venv/
@@ -12,6 +13,9 @@ env/
 # PyInstaller
 *.manifest
 *.spec.bak
+build-fixed*/
+dist-fixed*/
+tools/
 
 # App data
 ~/.dictly/
@@ -25,3 +29,6 @@ desktop.ini
 .vscode/
 .idea/
 *.swp
+
+# Local installer packaging
+installer-dist/

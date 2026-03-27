@@ -22,15 +22,15 @@ This repository is the source code. End users do not need to install Python pack
 
 ## Download
 
-For normal users, publish the Windows release artifact from GitHub Releases:
+GitHub does not run `.exe` files inside the repository page itself. For Windows users, the correct flow is:
 
-- `Dictly-windows.zip`
+1. Open the repo's **Releases** page.
+2. Download `Dictly-windows.zip`.
+3. Extract the ZIP on your PC.
+4. Open the extracted `Dictly` folder.
+5. Run `Dictly.exe`.
 
-After download:
-
-1. Extract the ZIP.
-2. Open the `Dictly` folder.
-3. Run `Dictly.exe`.
+Do not download only the standalone `.exe` from inside the folder tree. The app needs the bundled `_internal` files next to it.
 
 No `pip install` is required for release users.
 
@@ -59,18 +59,36 @@ Build output:
 
 Users can run that packaged build directly without installing Python or project dependencies.
 
-## GitHub Release Workflow
+## Build A Windows Installer
 
-This repo includes a GitHub Actions workflow that builds a Windows release ZIP.
+If you want a normal Windows installer instead of opening the packaged EXE folder directly:
+
+1. Build the app package first.
+2. Run:
+
+```powershell
+.\build-installer.bat
+```
+
+Installer output:
+
+- `installer-dist\Dictly-Setup.exe`
+
+Default behavior:
+
+- uses Inno Setup if available
+- otherwise falls back to a built-in IExpress installer
+
+The installer puts Dictly under the current user's `AppData\Local\Programs\Dictly` folder and creates Start Menu shortcuts.
+
+## Publishing Releases On GitHub
 
 Recommended release flow:
 
-1. Push the repository to GitHub.
-2. Create a tag such as `v0.1.0`.
-3. Push the tag.
-4. GitHub Actions builds `Dictly.exe` and uploads `Dictly-windows.zip` to the release.
-
-You can also trigger the workflow manually from the Actions tab.
+1. Build the Windows package locally.
+2. Open GitHub and create a new Release.
+3. Upload `Dictly-windows.zip` as a release asset.
+4. Tell users to download the ZIP from Releases, extract it, and run `Dictly.exe`.
 
 ## Current Backend Notes
 

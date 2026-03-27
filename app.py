@@ -3,14 +3,17 @@ app.py - Dictly main window built with CustomTkinter.
 """
 
 import customtkinter as ctk
+import logging
 
 import config_manager
 from dictation_overlay import DictationOverlay
 import history_manager
+from runtime_logging import get_log_file
 from settings_window import SettingsWindow
 from transcription_backends import backend_preference_notice, normalize_backend_preference
 
 ctk.set_default_color_theme("blue")
+logger = logging.getLogger(__name__)
 
 THEMES = {
     "light": {
@@ -428,3 +431,10 @@ class DictlyApp(ctk.CTk):
     def show(self):
         self.deiconify()
         self.lift()
+
+    def report_callback_exception(self, exc, val, tb):
+        logger.exception("Tkinter callback error", exc_info=(exc, val, tb))
+        try:
+            self.set_notice(f"Internal error. See log: {get_log_file()}")
+        except Exception:
+            pass

@@ -4,6 +4,7 @@
 from pathlib import Path
 
 from PyInstaller.utils.hooks import collect_data_files, collect_submodules
+from PyInstaller.utils.hooks.tcl_tk import tcltk_info
 
 block_cipher = None
 ROOT = Path.cwd()
@@ -12,6 +13,8 @@ ICON_ICO = ASSETS_DIR / "icon.ico"
 ICON_ICNS = ASSETS_DIR / "icon.icns"
 
 datas = collect_data_files("customtkinter")
+datas += collect_data_files("faster_whisper")
+datas += [(src, str(Path(dest_name).parent)) for dest_name, src, _type in tcltk_info.data_files]
 if ASSETS_DIR.exists():
     for asset in ASSETS_DIR.iterdir():
         if asset.is_file():

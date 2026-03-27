@@ -14,6 +14,7 @@ DEFAULTS = {
     "model": "small",
     "language": "en",
     "compute_type": "int8",
+    "faster_whisper_device": "auto",
     "hotkey": ["ctrl", "shift"],
     "paste_method": "clipboard",
     "append_space": True,

@@ -41,19 +41,53 @@ class FasterWhisperBackend(TranscriptionBackend):
     def __init__(self):
         self.model = None
         self._settings = {}
+        self._device = "cpu"
+        self.notice = None
+        self.active_name = self.name
 
     def load(self, settings: dict):
         from faster_whisper import WhisperModel
 
         self._settings = settings
         model_name = settings.get("model", "small")
+        requested_device = _normalize_faster_whisper_device(settings.get("faster_whisper_device"))
         compute_type = settings.get("compute_type", "int8")
-        print(f"[Transcriber] Backend={self.name} model='{model_name}' compute='{compute_type}'")
-        self.model = WhisperModel(model_name, device="cpu", compute_type=compute_type)
+        self.notice = None
+
+        if requested_device == "auto":
+            device = "cuda" if _supports_faster_whisper_cuda() else "cpu"
+        else:
+            device = requested_device
+
+        if device == "cuda" and not _supports_faster_whisper_cuda():
+            self.notice = "CUDA faster-whisper unavailable. Using CPU faster-whisper instead."
+            device = "cpu"
+
+        effective_compute_type = "float16" if device == "cuda" else compute_type
+
+        print(
+            f"[Transcriber] Backend={self.name} model='{model_name}' device='{device}' compute='{effective_compute_type}'"
+        )
+        try:
+            self.model = WhisperModel(model_name, device=device, compute_type=effective_compute_type)
+        except Exception:
+            if device != "cuda":
+                raise
+            self.notice = "CUDA faster-whisper failed to load. Using CPU faster-whisper instead."
+            device = "cpu"
+            effective_compute_type = compute_type
+            print(f"[Transcriber] {self.notice}")
+            self.model = WhisperModel(model_name, device=device, compute_type=effective_compute_type)
+
+        self._device = device
+        self.active_name = f"{self.name} ({device})"
         print("[Transcriber] Model ready [OK]")
 
     def unload(self):
         self.model = None
+        self.notice = None
+        self._device = "cpu"
+        self.active_name = self.name
 
     def transcribe(self, audio: np.ndarray) -> tuple[str, str]:
         if self.model is None:
@@ -136,17 +170,24 @@ class AutoBackend(TranscriptionBackend):
 
     def load(self, settings: dict):
         candidates = []
-        if _supports_directml():
-            candidates.append(("whisper-directml", WhisperDirectMLBackend))
-        candidates.append(("faster-whisper", FasterWhisperBackend))
+        faster_whisper_device = _normalize_faster_whisper_device(settings.get("faster_whisper_device"))
+
+        if faster_whisper_device == "auto":
+            if _supports_faster_whisper_cuda():
+                candidates.append(("faster-whisper", FasterWhisperBackend, {**settings, "faster_whisper_device": "cuda"}))
+            if _supports_directml():
+                candidates.append(("whisper-directml", WhisperDirectMLBackend, dict(settings)))
+            candidates.append(("faster-whisper", FasterWhisperBackend, {**settings, "faster_whisper_device": "cpu"}))
+        else:
+            candidates.append(("faster-whisper", FasterWhisperBackend, dict(settings)))
 
         errors = []
-        for backend_name, backend_type in candidates:
+        for backend_name, backend_type, backend_settings in candidates:
             backend = backend_type()
             try:
-                backend.load(settings)
+                backend.load(backend_settings)
                 self._selected_backend = backend
-                print(f"[Transcriber] Auto selected '{backend_name}'")
+                print(f"[Transcriber] Auto selected '{getattr(backend, 'active_name', backend_name)}'")
                 return
             except Exception as exc:
                 errors.append(f"{backend_name}: {exc}")
@@ -174,7 +215,7 @@ class AutoBackend(TranscriptionBackend):
 BACKEND_OPTIONS = [
     BackendOption(key=DEFAULT_BACKEND, label="Auto (prefer GPU, fallback to CPU)"),
     BackendOption(key="whisper-directml", label="Windows GPU (torch-directml, experimental)"),
-    BackendOption(key="faster-whisper", label="Built-in CPU (faster-whisper)"),
+    BackendOption(key="faster-whisper", label="faster-whisper (CPU / CUDA)"),
 ]
 
 _BACKEND_FACTORIES = {
@@ -214,6 +255,21 @@ def _supports_directml() -> bool:
         return True
     except Exception:
         return False
+
+
+def _supports_faster_whisper_cuda() -> bool:
+    try:
+        ctranslate2 = importlib.import_module("ctranslate2")
+        return bool(ctranslate2.get_cuda_device_count() > 0)
+    except Exception:
+        return False
+
+
+def _normalize_faster_whisper_device(value: str | None) -> str:
+    device = (value or "auto").strip().lower()
+    if device not in {"auto", "cpu", "cuda"}:
+        return "auto"
+    return device
 
 
 def get_backend_options() -> list[BackendOption]:

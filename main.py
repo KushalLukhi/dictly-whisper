@@ -3,6 +3,7 @@ main.py — Dictly entry point.
 Wires together keyboard listener, recorder, transcriber, UI and tray.
 """
 
+import logging
 import sys
 import threading
 import time
@@ -10,11 +11,14 @@ from pynput import keyboard
 
 import config_manager
 import history_manager
-from recorder import AudioRecorder
-from transcriber import Transcriber
-from typer import output_text
-from tray import TrayIcon
 from app import DictlyApp
+from recorder import AudioRecorder
+from runtime_logging import configure_logging, get_log_file
+from transcriber import Transcriber
+from tray import TrayIcon
+from typer import output_text
+
+logger = logging.getLogger(__name__)
 
 
 class Engine:
@@ -77,22 +81,32 @@ class Engine:
             threading.Thread(target=self._transcribe_and_paste, daemon=True).start()
 
     def _transcribe_and_paste(self):
-        audio, duration = self.recorder.stop()
-        if audio is not None and len(audio) > 0:
-            text, lang = self.transcriber.transcribe(audio)
-            if text:
-                time.sleep(0.15)
-                output_text(text, self.settings)
-                history_manager.add(text, duration, lang)
-                if self.app:
-                    self.app.set_result(text)
-                    self.app.set_status("done")
+        try:
+            audio, duration = self.recorder.stop()
+            if audio is not None and len(audio) > 0:
+                text, lang = self.transcriber.transcribe(audio)
+                if text:
+                    time.sleep(0.15)
+                    output_text(text, self.settings)
+                    history_manager.add(text, duration, lang)
+                    if self.app:
+                        self.app.set_result(text)
+                        self.app.set_status("done")
+                else:
+                    logger.warning("Transcription returned empty text.")
+                    if self.app:
+                        self.app.set_notice(f"No transcription result. See log: {get_log_file()}")
+                        self.app.set_status("idle")
             else:
+                logger.warning("Recorder returned empty audio.")
                 if self.app:
+                    self.app.set_notice(f"No audio captured. See log: {get_log_file()}")
                     self.app.set_status("idle")
-        else:
+        except Exception:
+            logger.exception("Transcription pipeline failed.")
             if self.app:
-                self.app.set_status("idle")
+                self.app.set_notice(f"Transcription failed. See log: {get_log_file()}")
+                self.app.set_status("error")
 
         with self._lock:
             self._transcribing = False
@@ -124,8 +138,10 @@ class Engine:
                 self.app.set_notice(self.transcriber.get_notice())
                 self.app.set_status("idle")
         except Exception as exc:
+            logger.exception("Failed to reload backend.")
             print(f"[Dictly] Failed to reload backend: {exc}")
             if self.app:
+                self.app.set_notice(f"Backend reload failed. See log: {get_log_file()}")
                 self.app.set_status("error")
 
     # ── Startup ────────────────────────────────────────────────────────────
@@ -149,8 +165,9 @@ class Engine:
                 self.app.set_status("idle")
                 print("  [OK] Hold hotkey to dictate anywhere.")
             except Exception as exc:
+                logger.exception("Failed to load backend.")
                 print(f"[Dictly] Failed to load backend: {exc}")
-                self.app.set_notice(str(exc))
+                self.app.set_notice(f"Backend load failed. See log: {get_log_file()}")
                 self.app.set_status("error")
 
         # Build tray
@@ -182,4 +199,5 @@ class Engine:
 
 
 if __name__ == "__main__":
+    configure_logging()
     Engine().run()
