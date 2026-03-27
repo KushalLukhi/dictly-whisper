@@ -2,6 +2,9 @@
 
 Offline push-to-talk dictation for desktop apps.
 
+[![GitHub Releases](https://img.shields.io/github/v/release/KushalLukhi/dictly-whisper?display_name=tag)](https://github.com/KushalLukhi/dictly-whisper/releases)
+[![Download Latest](https://img.shields.io/badge/Download-Windows%20ZIP-2563eb)](https://github.com/KushalLukhi/dictly-whisper/releases/latest)
+
 Hold a hotkey, speak, release, and Dictly transcribes locally with Whisper and pastes the text into the active app. No API keys, no cloud dependency, no subscription.
 
 ## Open Source
@@ -21,6 +24,11 @@ This repository is the source code. End users do not need to install Python pack
 - CPU fallback when GPU backend is unavailable
 
 ## Download
+
+Latest release:
+
+- Releases page: `https://github.com/KushalLukhi/dictly-whisper/releases`
+- Latest release: `https://github.com/KushalLukhi/dictly-whisper/releases/latest`
 
 GitHub does not run `.exe` files inside the repository page itself. For Windows users, the correct flow is:
 
