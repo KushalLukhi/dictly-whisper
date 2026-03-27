@@ -1,11 +1,27 @@
-# Dictly
+# Dictly Whisper
 
-Offline push-to-talk dictation for desktop apps.
+Offline Whisper dictation app for Windows desktop voice typing.
 
 [![GitHub Releases](https://img.shields.io/github/v/release/KushalLukhi/dictly-whisper?display_name=tag)](https://github.com/KushalLukhi/dictly-whisper/releases)
 [![Download Latest](https://img.shields.io/badge/Download-Windows%20ZIP-2563eb)](https://github.com/KushalLukhi/dictly-whisper/releases/latest)
 
-Hold a hotkey, speak, release, and Dictly transcribes locally with Whisper and pastes the text into the active app. No API keys, no cloud dependency, no subscription.
+Dictly is an open-source offline speech-to-text app built around Whisper and faster-whisper for Windows dictation. Hold a hotkey, speak, release, and Dictly transcribes your voice locally and pastes the text into the active app. No API keys, no cloud dependency, no subscription.
+
+## What Dictly Is
+
+Dictly is a local AI dictation tool for:
+
+- offline voice typing on Windows
+- Whisper speech recognition
+- faster-whisper transcription
+- push-to-talk speech to text
+- desktop dictation in any app
+
+If someone is searching for a Whisper dictation app, offline speech-to-text for Windows, or a faster-whisper desktop transcription tool, this repository is for that use case.
+
+## Screenshot
+
+![Dictly Whisper desktop overlay screenshot](assets/image.png)
 
 ## Open Source
 
@@ -15,13 +31,18 @@ This repository is the source code. End users do not need to install Python pack
 
 ## Features
 
-- Offline transcription with Whisper
+- Offline transcription with Whisper and faster-whisper
 - Push-to-talk global hotkey
 - Desktop waveform overlay
-- Settings UI for backend, model, beam size, language, and theme
+- Settings UI for backend, model, beam size, language, theme, and device
 - Transcription history
 - Tray icon and startup option
 - CPU fallback when GPU backend is unavailable
+- Packaged Windows EXE build for non-technical users
+
+## Keywords
+
+Whisper, faster-whisper, speech to text, offline dictation, Windows dictation, voice typing, local transcription, AI dictation, desktop dictation, push-to-talk transcription, offline voice input, open source Whisper app.
 
 ## Download
 
@@ -101,7 +122,7 @@ Recommended release flow:
 ## Current Backend Notes
 
 - `auto`: prefers the best available supported backend
-- `faster-whisper`: reliable CPU path
+- `faster-whisper`: reliable CPU path with optional CUDA device selection
 - `whisper-directml`: optional and guarded; falls back to CPU if unsupported
 
 ## Project Layout
