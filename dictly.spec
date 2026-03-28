@@ -9,22 +9,34 @@ from PyInstaller.utils.hooks.tcl_tk import tcltk_info
 block_cipher = None
 ROOT = Path.cwd()
 ASSETS_DIR = ROOT / "assets"
+MODELS_DIR = ROOT / "models"
 ICON_ICO = ASSETS_DIR / "icon.ico"
 ICON_ICNS = ASSETS_DIR / "icon.icns"
 
 datas = collect_data_files("customtkinter")
 datas += collect_data_files("faster_whisper")
+datas += collect_data_files("whisperx")
+datas += collect_data_files("transformers")
+datas += collect_data_files("certifi")
+datas += collect_data_files("certifi_win32")
 datas += [(src, str(Path(dest_name).parent)) for dest_name, src, _type in tcltk_info.data_files]
 if ASSETS_DIR.exists():
     for asset in ASSETS_DIR.iterdir():
         if asset.is_file():
             datas.append((str(asset), "assets"))
+if MODELS_DIR.exists():
+    for model_file in MODELS_DIR.rglob("*"):
+        if model_file.is_file():
+            datas.append((str(model_file), str(Path("models") / model_file.relative_to(MODELS_DIR).parent)))
 
 hiddenimports = sorted(
     set(
         [
             "customtkinter",
             "faster_whisper",
+            "transformers",
+            "whisperx",
+            "accelerate",
             "sounddevice",
             "pyperclip",
             "pynput",
@@ -36,6 +48,9 @@ hiddenimports = sorted(
             "ctranslate2",
             "tokenizers",
             "huggingface_hub",
+            "certifi",
+            "truststore",
+            "certifi_win32",
         ]
         + collect_submodules("customtkinter")
     )

@@ -3,6 +3,7 @@ settings_window.py - Dictly settings dialog built with CustomTkinter.
 """
 
 import customtkinter as ctk
+from tkinter import filedialog
 
 from config_manager import LANGUAGE_OPTIONS, MODEL_OPTIONS
 import startup_manager
@@ -50,8 +51,8 @@ class SettingsWindow(ctk.CTkToplevel):
     def __init__(self, parent, settings: dict, on_save):
         super().__init__(parent)
         self.title("Dictly - Settings")
-        self.geometry("560x560")
-        self.minsize(560, 560)
+        self.geometry("560x660")
+        self.minsize(560, 660)
         self.resizable(False, False)
         self._settings = dict(settings)
         self._on_save = on_save
@@ -78,6 +79,7 @@ class SettingsWindow(ctk.CTkToplevel):
         backend_label = next((option.label for option in backend_options if option.key == selected_backend), backend_labels[0])
         self._backend_var = ctk.StringVar(value=backend_label)
         self._model_var = ctk.StringVar(value=self._settings.get("model", "small"))
+        self._model_path_var = ctk.StringVar(value=self._settings.get("model_path", ""))
         lang_code = self._settings.get("language")
         lang_display = next((key for key, value in LANGUAGE_OPTIONS.items() if value == lang_code), "English")
         self._lang_var = ctk.StringVar(value=lang_display)
@@ -105,9 +107,11 @@ class SettingsWindow(ctk.CTkToplevel):
                     lambda master: self._build_option_menu(master, self._faster_whisper_device_var, FASTER_WHISPER_DEVICE_OPTIONS),
                 ),
                 ("Model", lambda master: self._build_option_menu(master, self._model_var, MODEL_OPTIONS)),
+                ("Local Model Directory", self._build_model_path_widget),
                 ("Language", lambda master: self._build_option_menu(master, self._lang_var, list(LANGUAGE_OPTIONS.keys()))),
                 ("Beam Size", self._build_beam_widget),
             ],
+            footer_text="Leave Local Model Directory empty to use the Hugging Face cache. Bundled models currently target faster-whisper and WhisperX; insanely-fast-whisper expects a transformers-compatible model path or Hub download.",
         )
 
         self._build_section(
@@ -267,9 +271,42 @@ class SettingsWindow(ctk.CTkToplevel):
         value_label.pack(side="left", padx=(10, 0))
         return frame
 
+    def _build_model_path_widget(self, master):
+        frame = ctk.CTkFrame(master, fg_color="transparent")
+        entry = ctk.CTkEntry(frame, width=240, textvariable=self._model_path_var)
+        entry.pack(side="left")
+        ctk.CTkButton(
+            frame,
+            text="Browse",
+            width=68,
+            command=self._pick_model_path,
+        ).pack(side="left", padx=(8, 6))
+        ctk.CTkButton(
+            frame,
+            text="Clear",
+            width=56,
+            fg_color=self._theme["button_bg"],
+            hover_color=self._theme["button_hover"],
+            border_width=1,
+            border_color=self._theme["button_border"],
+            text_color=self._theme["button_text"],
+            command=lambda: self._model_path_var.set(""),
+        ).pack(side="left")
+        return frame
+
+    def _pick_model_path(self):
+        selected = filedialog.askdirectory(
+            parent=self,
+            title="Select local model directory",
+            initialdir=self._model_path_var.get() or None,
+        )
+        if selected:
+            self._model_path_var.set(selected)
+
     def _save(self):
         self._settings["backend"] = self._backend_label_to_key[self._backend_var.get()]
         self._settings["model"] = self._model_var.get()
+        self._settings["model_path"] = self._model_path_var.get().strip()
         self._settings["language"] = LANGUAGE_OPTIONS.get(self._lang_var.get())
         self._settings["beam_size"] = self._beam_var.get()
         self._settings["faster_whisper_device"] = self._faster_whisper_device_var.get().lower()

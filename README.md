@@ -1,11 +1,11 @@
 # Dictly Whisper
 
-Offline Whisper dictation app for Windows desktop voice typing.
+Open-source offline Whisper dictation app for Windows desktop voice typing and local speech-to-text.
 
 [![GitHub Releases](https://img.shields.io/github/v/release/KushalLukhi/dictly-whisper?display_name=tag)](https://github.com/KushalLukhi/dictly-whisper/releases)
 [![Download Latest](https://img.shields.io/badge/Download-Windows%20ZIP-2563eb)](https://github.com/KushalLukhi/dictly-whisper/releases/latest)
 
-Dictly is an open-source offline speech-to-text app built around Whisper and faster-whisper for Windows dictation. Hold a hotkey, speak, release, and Dictly transcribes your voice locally and pastes the text into the active app. No API keys, no cloud dependency, no subscription.
+Dictly is an open-source offline Whisper dictation app for Windows built around Whisper, faster-whisper, WhisperX, and local speech-to-text workflows. Hold a hotkey, speak, release, and Dictly transcribes your voice locally and pastes the text into the active app. No API keys, no cloud dependency, no subscription.
 
 ## What Dictly Is
 
@@ -17,7 +17,7 @@ Dictly is a local AI dictation tool for:
 - push-to-talk speech to text
 - desktop dictation in any app
 
-If someone is searching for a Whisper dictation app, offline speech-to-text for Windows, or a faster-whisper desktop transcription tool, this repository is for that use case.
+If someone is searching for a Whisper dictation app, offline speech-to-text for Windows, open-source voice typing software, or a faster-whisper desktop transcription tool, this repository is for that use case.
 
 ## Screenshot
 
@@ -42,7 +42,7 @@ This repository is the source code. End users do not need to install Python pack
 
 ## Keywords
 
-Whisper, faster-whisper, speech to text, offline dictation, Windows dictation, voice typing, local transcription, AI dictation, desktop dictation, push-to-talk transcription, offline voice input, open source Whisper app.
+Whisper, faster-whisper, whisperx, speech to text, offline dictation, Windows dictation, voice typing, local transcription, AI dictation, desktop dictation, push-to-talk transcription, offline voice input, open source Whisper app, offline speech recognition, Windows voice typing, local AI transcription, desktop speech-to-text.
 
 ## Download
 
@@ -122,8 +122,69 @@ Recommended release flow:
 ## Current Backend Notes
 
 - `auto`: prefers the best available supported backend
+- `insanely-fast-whisper`: CUDA-only `transformers` backend tuned for fast chunked Whisper inference
 - `faster-whisper`: reliable CPU path with optional CUDA device selection
+- `whisperx`: experimental live mode without alignment or diarization
 - `whisper-directml`: optional and guarded; falls back to CPU if unsupported
+
+## Offline Model Setup
+
+Dictly can now load `faster-whisper` models from disk instead of downloading them from the Hugging Face Hub.
+
+To download every Dictly model locally into the repo:
+
+```powershell
+.\download-models.bat
+```
+
+This downloads:
+
+- `tiny`
+- `base`
+- `small`
+- `medium`
+- `large-v2`
+- `large-v3`
+
+The files are stored under `models\<model-name>` and are automatically picked up by the packaged app.
+
+Option 1: pick a local model folder in Settings.
+
+- Open `Settings`
+- Set `Model` to match the local model you downloaded, for example `small`
+- Set `Local Model Directory` to the extracted model folder
+- Save and reload
+
+Option 2: bundle models into the packaged app.
+
+Place the model files under this repo before building:
+
+```text
+models/
+  small/
+    config.json
+    model.bin
+    tokenizer.json
+    vocabulary.json
+    ...
+```
+
+Then rebuild with:
+
+```powershell
+.\build.bat
+```
+
+The packaged app will automatically look for bundled models under `models\<model-name>` before trying the Hub.
+
+## Insanely Fast Whisper Notes
+
+The `insanely-fast-whisper` backend is intended for NVIDIA CUDA systems with `torch` + `transformers` available.
+
+- It is not used by `auto`; select it explicitly in Settings.
+- It falls back to `faster-whisper` if CUDA or the required Python deps are unavailable.
+- It uses OpenAI Whisper checkpoints from Hugging Face such as `openai/whisper-small`.
+- The shared `Local Model Directory` field must point to a transformers-compatible Whisper model folder for this backend. The bundled `models/` layout produced by `download_models.py` is for faster-whisper and should not be reused here.
 
 ## Project Layout
 
@@ -149,6 +210,6 @@ requirements-build.txt
 
 ## Notes For Contributors
 
-- The packaged app still downloads Whisper model weights on first use.
-- If you want fully offline first-run behavior, you need to pre-bundle model files separately.
+- The packaged app still downloads Whisper model weights on first use unless a compatible local or bundled model directory is provided.
+- First-run model downloads depend on valid TLS certificates. Packaged Windows builds now try the Windows trust store first, then fall back to `certifi`; machines behind SSL inspection still need their root CA installed in Windows.
 - Global hotkeys, microphone access, and text insertion behavior can vary across operating systems.

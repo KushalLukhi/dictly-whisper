@@ -19,6 +19,7 @@ tools/
 
 # App data
 ~/.dictly/
+models/
 
 # OS
 .DS_Store

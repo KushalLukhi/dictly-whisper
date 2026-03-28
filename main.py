@@ -17,6 +17,7 @@ from runtime_logging import configure_logging, get_log_file
 from transcriber import Transcriber
 from tray import TrayIcon
 from typer import output_text
+from transcription_backends import ModelUnavailableError
 
 logger = logging.getLogger(__name__)
 
@@ -103,10 +104,19 @@ class Engine:
                     self.app.set_notice(f"No audio captured. See log: {get_log_file()}")
                     self.app.set_status("idle")
         except Exception:
-            logger.exception("Transcription pipeline failed.")
-            if self.app:
-                self.app.set_notice(f"Transcription failed. See log: {get_log_file()}")
-                self.app.set_status("error")
+            message = "Transcription failed. See log: {log_file}".format(log_file=get_log_file())
+            exc = sys.exc_info()[1]
+            if isinstance(exc, RuntimeError) and str(exc) == "Model not loaded.":
+                message = "Model is not loaded. Choose a Local Model Directory in Settings."
+                logger.warning("Transcription requested before a local model was loaded.")
+                if self.app:
+                    self.app.set_notice(message)
+                    self.app.set_status("idle")
+            else:
+                logger.exception("Transcription pipeline failed.")
+                if self.app:
+                    self.app.set_notice(message)
+                    self.app.set_status("error")
 
         with self._lock:
             self._transcribing = False
@@ -137,6 +147,16 @@ class Engine:
                 )
                 self.app.set_notice(self.transcriber.get_notice())
                 self.app.set_status("idle")
+        except ModelUnavailableError as exc:
+            print(f"[Dictly] {exc}")
+            if self.app:
+                self.app.set_runtime_info(
+                    requested_backend=self.settings.get("backend"),
+                    active_backend="Not loaded",
+                    settings=self.settings,
+                )
+                self.app.set_notice(str(exc))
+                self.app.set_status("idle")
         except Exception as exc:
             logger.exception("Failed to reload backend.")
             print(f"[Dictly] Failed to reload backend: {exc}")
@@ -164,6 +184,15 @@ class Engine:
                 self.app.set_notice(self.transcriber.get_notice())
                 self.app.set_status("idle")
                 print("  [OK] Hold hotkey to dictate anywhere.")
+            except ModelUnavailableError as exc:
+                print(f"[Dictly] {exc}")
+                self.app.set_runtime_info(
+                    requested_backend=self.settings.get("backend"),
+                    active_backend="Not loaded",
+                    settings=self.settings,
+                )
+                self.app.set_notice(str(exc))
+                self.app.set_status("idle")
             except Exception as exc:
                 logger.exception("Failed to load backend.")
                 print(f"[Dictly] Failed to load backend: {exc}")

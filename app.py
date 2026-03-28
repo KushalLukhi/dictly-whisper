@@ -267,8 +267,14 @@ class DictlyApp(ctk.CTk):
         value.pack(anchor="w", padx=12, pady=(0, 10))
         return value
 
-    def _status_summary(self, requested_backend: str, active_backend: str, settings: dict) -> str:
+    def _model_summary(self, settings: dict) -> str:
         model = settings.get("model", "small")
+        if (settings.get("model_path") or "").strip():
+            return f"{model} (local)"
+        return str(model)
+
+    def _status_summary(self, requested_backend: str, active_backend: str, settings: dict) -> str:
+        model = self._model_summary(settings)
         beam = settings.get("beam_size", 15)
         lang = settings.get("language") or "auto"
         return f"Requested: {requested_backend}  |  Active: {active_backend}  |  Model: {model}  |  Beam: {beam}  |  Language: {lang}"
@@ -300,7 +306,7 @@ class DictlyApp(ctk.CTk):
                 return
             self._requested_chip.configure(text=str(self._requested_backend))
             self._active_chip.configure(text=str(self._active_backend))
-            self._model_chip.configure(text=str(runtime_settings.get("model", "small")))
+            self._model_chip.configure(text=self._model_summary(runtime_settings))
             self._speech_chip.configure(text=f"{beam} / {lang}")
             self._footer_label.configure(
                 text=self._status_summary(

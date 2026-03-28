@@ -12,9 +12,13 @@ SETTINGS_FILE = APP_DIR / "settings.json"
 DEFAULTS = {
     "backend": "auto",
     "model": "small",
+    "model_path": "",
     "language": "en",
     "compute_type": "int8",
     "faster_whisper_device": "auto",
+    "insanely_fast_batch_size": 24,
+    "insanely_fast_chunk_length_s": 30,
+    "whisperx_batch_size": 4,
     "hotkey": ["ctrl", "shift"],
     "paste_method": "clipboard",
     "append_space": True,
