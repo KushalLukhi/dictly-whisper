@@ -24,6 +24,8 @@ SolidCompression=yes
 WizardStyle=modern
 OutputDir=installer-dist
 OutputBaseFilename=Dictly-Setup
+DiskSpanning=yes
+DiskSliceSize=2000000000
 UninstallDisplayIcon={app}\Dictly.exe
 
 [Languages]

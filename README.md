@@ -110,6 +110,31 @@ Default behavior:
 
 The installer puts Dictly under the current user's `AppData\Local\Programs\Dictly` folder and creates Start Menu shortcuts.
 
+## Build An Offline Windows Installer
+
+If you want users to install Dictly without downloading models on first run, bundle models into the app before building the installer.
+
+Recommended flow:
+
+1. Download the models you want to ship:
+
+```powershell
+.\download-models.bat
+```
+
+2. Build the offline installer:
+
+```powershell
+.\build-offline-installer.bat
+```
+
+Notes:
+
+- The build includes everything found under `models\`
+- The installer will contain those bundled model files
+- Larger models make the installer much bigger
+- For most users, bundling `small` is the best size versus quality tradeoff
+
 ## Publishing Releases On GitHub
 
 Recommended release flow:
