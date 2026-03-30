@@ -19,10 +19,6 @@ Dictly is a local AI dictation tool for:
 
 If someone is searching for a Whisper dictation app, offline speech-to-text for Windows, open-source voice typing software, or a faster-whisper desktop transcription tool, this repository is for that use case.
 
-## Screenshot
-
-![Dictly Whisper desktop overlay screenshot](assets/image.png)
-
 ## Open Source
 
 Dictly is released under the MIT license in [LICENSE](LICENSE).
